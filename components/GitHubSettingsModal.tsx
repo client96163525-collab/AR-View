@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { GitHubConfig } from '../types';
 import { CloseIcon, GitHubIcon } from './icons';
@@ -9,8 +10,8 @@ interface GitHubSettingsModalProps {
 }
 
 const GitHubSettingsModal: React.FC<GitHubSettingsModalProps> = ({ onClose, onSave, currentConfig }) => {
-  const [owner, setOwner] = useState('');
-  const [repo, setRepo] = useState('');
+  const [owner, setOwner] = useState('client96163525-collab');
+  const [repo, setRepo] = useState('ar3dview');
   const [pat, setPat] = useState('');
   const [branch, setBranch] = useState('main');
   const [error, setError] = useState('');
@@ -55,9 +56,7 @@ const GitHubSettingsModal: React.FC<GitHubSettingsModalProps> = ({ onClose, onSa
         
         <div className="p-6 space-y-4">
             <p className="text-sm text-slate-400">
-                Provide your GitHub details to host the models. A new file will be committed to the specified branch inside a <strong>/models</strong> folder.
-                <br />
-                <strong>Important:</strong> You must create the <strong>/models</strong> directory in your repository yourself.
+                Provide your GitHub details to host the models. A new file will be committed to the specified branch inside a <strong>/models</strong> folder. The folder will be created if it doesn't exist.
             </p>
             <div>
               <label htmlFor="owner" className="block text-sm font-medium text-slate-300 mb-1">

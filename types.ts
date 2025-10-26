@@ -1,4 +1,4 @@
-import type { DetailedHTMLProps, HTMLAttributes, JSX as ReactJSX } from 'react';
+import type { DetailedHTMLProps, HTMLAttributes } from 'react';
 
 export interface ModelData {
   id: string;
@@ -18,10 +18,11 @@ export interface GitHubConfig {
 // This allows TypeScript to recognize <model-viewer> as a valid JSX tag.
 declare global {
   namespace JSX {
-    // Fix: Extend React's IntrinsicElements to include default HTML tags. The original
-    // declaration was overwriting the default types, causing errors for all standard
-    // HTML elements like <div>, <p>, etc.
-    interface IntrinsicElements extends ReactJSX.IntrinsicElements {
+    // Fix: The previous definition was incorrectly extending React's JSX.IntrinsicElements,
+    // which overwrites the default types instead of augmenting them. The correct approach
+    // is to re-declare the interface, allowing TypeScript's declaration merging to add
+    // the custom 'model-viewer' element while preserving all standard HTML tags.
+    interface IntrinsicElements {
       'model-viewer': DetailedHTMLProps<
         // Inherit all standard HTML attributes (e.g., style, className).
         HTMLAttributes<HTMLElement>,

@@ -9,13 +9,19 @@ interface ModelCardProps {
 
 const ModelCard: React.FC<ModelCardProps> = ({ model }) => {
   const [copied, setCopied] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
 
   const handleShare = () => {
     const url = new URL(window.location.href);
     url.searchParams.set('modelId', model.id);
-    navigator.clipboard.writeText(url.toString()).then(() => {
+    const urlString = url.toString();
+    navigator.clipboard.writeText(urlString).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+      setShareUrl(urlString);
+      setTimeout(() => {
+        setCopied(false);
+        setShareUrl(null);
+      }, 3000); // Reset after 3 seconds
     });
   };
 
@@ -54,6 +60,19 @@ const ModelCard: React.FC<ModelCardProps> = ({ model }) => {
               </>
             )}
           </button>
+          {shareUrl && (
+            <div className="mt-2">
+              <label htmlFor={`share-url-${model.id}`} className="sr-only">Shareable URL</label>
+              <input
+                id={`share-url-${model.id}`}
+                type="text"
+                readOnly
+                value={shareUrl}
+                className="w-full bg-slate-900 border border-slate-600 rounded-md px-3 py-1 text-xs text-slate-300 focus:ring-0 focus:border-cyan-500"
+                onClick={(e) => (e.target as HTMLInputElement).select()}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
