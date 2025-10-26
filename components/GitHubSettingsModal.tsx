@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { GitHubConfig } from '../types';
 import { CloseIcon, GitHubIcon } from './icons';
@@ -14,6 +13,7 @@ const GitHubSettingsModal: React.FC<GitHubSettingsModalProps> = ({ onClose, onSa
   const [repo, setRepo] = useState('AR-View');
   const [pat, setPat] = useState('');
   const [branch, setBranch] = useState('main');
+  const [publicUrl, setPublicUrl] = useState('');
   const [error, setError] = useState('');
   
   useEffect(() => {
@@ -22,15 +22,16 @@ const GitHubSettingsModal: React.FC<GitHubSettingsModalProps> = ({ onClose, onSa
       setRepo(currentConfig.repo);
       setPat(currentConfig.pat);
       setBranch(currentConfig.branch || 'main');
+      setPublicUrl(currentConfig.publicUrl || '');
     }
   }, [currentConfig]);
 
   const handleSave = () => {
     if (!owner.trim() || !repo.trim() || !pat.trim() || !branch.trim()) {
-      setError('All fields are required.');
+      setError('Owner, Repo, PAT, and Branch fields are required.');
       return;
     }
-    onSave({ owner, repo, pat, branch });
+    onSave({ owner, repo, pat, branch, publicUrl });
   };
 
   return (
@@ -54,7 +55,7 @@ const GitHubSettingsModal: React.FC<GitHubSettingsModalProps> = ({ onClose, onSa
           </button>
         </div>
         
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
             <p className="text-sm text-slate-400">
                 Provide your GitHub details to host the models. A new file will be committed to the specified branch inside a <strong>/models</strong> folder. The folder will be created if it doesn't exist.
             </p>
@@ -114,10 +115,27 @@ const GitHubSettingsModal: React.FC<GitHubSettingsModalProps> = ({ onClose, onSa
               />
             </div>
 
+            <div>
+              <label htmlFor="publicUrl" className="block text-sm font-medium text-slate-300 mb-1">
+                Public Application URL (Optional)
+              </label>
+              <input
+                id="publicUrl"
+                type="url"
+                value={publicUrl}
+                onChange={(e) => setPublicUrl(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
+                placeholder="https://your-username.github.io/AR-View/"
+              />
+               <p className="text-xs text-slate-500 mt-1">
+                Enter the URL where this app is deployed. This is needed for QR codes and sharing links to work correctly.
+              </p>
+            </div>
+
             <div className="bg-red-900/50 border border-red-700 text-red-300 text-xs rounded-md p-3">
                 <p className="font-bold">Security Warning</p>
                 <p className="mt-1">
-                    Pasting your Personal Access Token here stores it in your browser. Use a token with only the necessary `repo` permissions. 
+                    Your Personal Access Token is stored in your browser. Use a token with only the necessary `repo` permissions. 
                     <a href="https://github.com/settings/tokens/new?scopes=repo&description=3DModelShowcase" target="_blank" rel="noopener noreferrer" className="underline hover:text-red-200 ml-1">
                        Create a secure token.
                     </a>

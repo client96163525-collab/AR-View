@@ -2,21 +2,18 @@ import React, { useState } from 'react';
 import { CloseIcon, ClipboardCheckIcon, ShareIcon } from './icons';
 
 interface ARQRCodeModalProps {
-  modelId: string;
+  shareUrl: string;
   modelTitle: string;
   onClose: () => void;
 }
 
-const ARQRCodeModal: React.FC<ARQRCodeModalProps> = ({ modelId, modelTitle, onClose }) => {
+const ARQRCodeModal: React.FC<ARQRCodeModalProps> = ({ shareUrl, modelTitle, onClose }) => {
   const [copied, setCopied] = useState(false);
-  const url = new URL(window.location.href);
-  url.searchParams.set('modelId', modelId);
-  const urlString = url.toString();
 
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(urlString)}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(shareUrl)}`;
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(urlString).then(() => {
+    navigator.clipboard.writeText(shareUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });

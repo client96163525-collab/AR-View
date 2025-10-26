@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ModelData } from '../types';
+import React, { useState, useMemo } from 'react';
+import { ModelData, GitHubConfig } from '../types';
 import { ShareIcon, ClipboardCheckIcon, ARIcon } from './icons';
 import ARQRCodeModal from './ARQRCodeModal';
 
@@ -12,13 +12,30 @@ const ModelCard: React.FC<ModelCardProps> = ({ model }) => {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isARModalOpen, setIsARModalOpen] = useState(false);
 
+  const fullShareUrl = useMemo(() => {
+    try {
+      const storedConfig = localStorage.getItem('github-config');
+      const config: GitHubConfig | null = storedConfig ? JSON.parse(storedConfig) : null;
+      
+      // Use the public URL from settings if it exists, otherwise default to the current page's origin.
+      const baseUrl = config?.publicUrl || window.location.origin;
+      
+      const url = new URL(window.location.pathname, baseUrl);
+      url.searchParams.set('modelId', model.id);
+      return url.toString();
+    } catch (error) {
+      console.error("Error creating share URL:", error);
+      // Fallback to a relative URL if parsing fails
+      const url = new URL(window.location.href);
+      url.searchParams.set('modelId', model.id);
+      return url.toString();
+    }
+  }, [model.id]);
+
   const handleShare = () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('modelId', model.id);
-    const urlString = url.toString();
-    navigator.clipboard.writeText(urlString).then(() => {
+    navigator.clipboard.writeText(fullShareUrl).then(() => {
       setCopied(true);
-      setShareUrl(urlString);
+      setShareUrl(fullShareUrl);
       setTimeout(() => {
         setCopied(false);
         setShareUrl(null);
@@ -41,7 +58,7 @@ const ModelCard: React.FC<ModelCardProps> = ({ model }) => {
         </div>
         <div className="p-4 flex-grow flex flex-col">
           <div className="flex-grow">
-            <h3 className="text-lg font-bold text-white">{model.title}</h3>
+            <h3 className="text-lg font-bold text-white truncate">{model.title}</h3>
             {model.description && <p className="text-sm text-slate-400 mt-1 line-clamp-2">{model.description}</p>}
           </div>
           <div className="mt-4">
@@ -84,7 +101,7 @@ const ModelCard: React.FC<ModelCardProps> = ({ model }) => {
       </div>
       {isARModalOpen && (
         <ARQRCodeModal 
-            modelId={model.id} 
+            shareUrl={fullShareUrl}
             modelTitle={model.title}
             onClose={() => setIsARModalOpen(false)} 
         />

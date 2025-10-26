@@ -1,9 +1,9 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { ModelData, GitHubConfig } from '../types';
-import { UploadIcon } from './icons';
+import { GitHubConfig } from '../types';
+import { UploadIcon, ExclamationTriangleIcon } from './icons';
 
 interface ModelUploaderProps {
-  onPublish: (model: Omit<ModelData, 'id'>) => void;
+  onPublish: () => void;
 }
 
 const ModelUploader: React.FC<ModelUploaderProps> = ({ onPublish }) => {
@@ -23,7 +23,7 @@ const ModelUploader: React.FC<ModelUploaderProps> = ({ onPublish }) => {
 
       if (supportedFormats.includes(fileExtension)) {
         if (selectedFile.size > 50 * 1024 * 1024) {
-          setError('File is too large (> 50MB). Please upload a smaller model.');
+          setError('File size exceeds the 50MB limit. Please optimize your model and try again.');
           setFile(null);
           setPreviewUrl(null);
           return;
@@ -70,14 +70,12 @@ const ModelUploader: React.FC<ModelUploaderProps> = ({ onPublish }) => {
     setError(null);
 
     try {
-        // The previewUrl is a data URL: "data:mime/type;base64,content"
-        // We need to extract just the base64 content part.
         const base64Content = previewUrl.split(',')[1];
         if (!base64Content) {
             throw new Error("Could not extract file content.");
         }
 
-        const uniqueFileName = `${Date.now()}-${file.name}`;
+        const uniqueFileName = `${Date.now()}-${file.name.replace(/ /g, '_')}`;
         const apiUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/models/${uniqueFileName}`;
 
         const response = await fetch(apiUrl, {
@@ -99,16 +97,8 @@ const ModelUploader: React.FC<ModelUploaderProps> = ({ onPublish }) => {
             throw new Error(`GitHub API Error: ${errorData.message || 'Failed to upload.'}`);
         }
 
-        const responseData = await response.json();
-        const downloadUrl = responseData.content.download_url;
+        onPublish();
 
-        if (!downloadUrl) {
-            throw new Error("Could not get download URL from GitHub response.");
-        }
-
-        onPublish({ title, description, fileUrl: downloadUrl });
-
-        // Reset form on success
         setTitle('');
         setDescription('');
         setFile(null);
@@ -179,25 +169,32 @@ const ModelUploader: React.FC<ModelUploaderProps> = ({ onPublish }) => {
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
             className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
-            placeholder="A short description of your model."
+            placeholder="This will not be saved to GitHub, only used for search."
           />
         </div>
 
         <div>
             <label 
-                className={`flex justify-center w-full h-32 px-4 transition bg-slate-900 border-2 border-slate-700 border-dashed rounded-md appearance-none cursor-pointer hover:border-cyan-400 focus:outline-none ${isDragging ? 'border-cyan-400 ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-800' : ''}`}
+                className={`flex flex-col justify-center items-center w-full h-32 px-4 transition bg-slate-900 border-2 border-slate-700 border-dashed rounded-md appearance-none cursor-pointer hover:border-cyan-400 focus:outline-none ${isDragging ? 'border-cyan-400 ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-800' : ''}`}
                 onDragEnter={handleDragEnter}
                 onDragLeave={handleDragLeave}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
             >
-                <span className="flex items-center space-x-2">
-                    <UploadIcon className="w-6 h-6 text-slate-400"/>
-                    <span className="font-medium text-slate-400 text-center">
-                        {file ? `${file.name}` : `Drop file or click to upload`}
-                        <span className="block text-slate-500 text-xs"> (.glb, .gltf, .usdz, max 50MB)</span>
-                    </span>
-                </span>
+                {isDragging ? (
+                    <div className="text-center pointer-events-none">
+                        <UploadIcon className="w-10 h-10 text-cyan-400 mx-auto" />
+                        <p className="mt-2 font-semibold text-cyan-400">Drop Your Model Here</p>
+                    </div>
+                ) : (
+                    <div className="text-center">
+                        <UploadIcon className="w-8 h-8 text-slate-400 mx-auto mb-2"/>
+                        <p className="font-medium text-slate-400">
+                            {file ? `${file.name}` : `Drop file or click to upload`}
+                        </p>
+                        <p className="text-slate-500 text-xs"> (.glb, .gltf, .usdz, max 50MB)</p>
+                    </div>
+                )}
                 <input 
                     type="file" 
                     name="file_upload" 
@@ -225,7 +222,12 @@ const ModelUploader: React.FC<ModelUploaderProps> = ({ onPublish }) => {
           </div>
         )}
         
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && (
+          <div className="bg-red-900/50 border border-red-700 text-red-300 text-sm rounded-md p-3 flex items-start gap-3">
+            <ExclamationTriangleIcon className="w-5 h-5 mt-0.5 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
 
         <button
           onClick={handlePublishClick}

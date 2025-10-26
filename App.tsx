@@ -1,22 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ModelData, GitHubConfig } from './types';
 import Header from './components/Header';
 import ModelUploader from './components/ModelUploader';
 import ModelGallery from './components/ModelGallery';
 import FullScreenModelViewer from './components/FullScreenModelViewer';
 import GitHubSettingsModal from './components/GitHubSettingsModal';
+import PasswordProtection from './components/PasswordProtection';
+import { CubeTransparentIcon } from './components/icons';
 
 const App: React.FC = () => {
-  const [models, setModels] = useState<ModelData[]>(() => {
-    try {
-      const storedModels = localStorage.getItem('glb-models');
-      return storedModels ? JSON.parse(storedModels) : [];
-    } catch (error) {
-      console.error("Failed to parse models from localStorage", error);
-      return [];
-    }
-  });
-
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [models, setModels] = useState<ModelData[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentModelId, setCurrentModelId] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [githubConfig, setGithubConfig] = useState<GitHubConfig | null>(() => {
@@ -29,8 +24,85 @@ const App: React.FC = () => {
   });
 
   useEffect(() => {
-    localStorage.setItem('glb-models', JSON.stringify(models));
-  }, [models]);
+    const sessionAuth = sessionStorage.getItem('app-authenticated');
+    if (sessionAuth === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const fetchModelsFromRepo = useCallback(async (config: GitHubConfig) => {
+    if (!config || !config.owner || !config.repo) {
+      setIsLoading(false);
+      return;
+    }
+    
+    setIsLoading(true);
+    setModels([]);
+
+    try {
+      const apiUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/models`;
+      const response = await fetch(apiUrl, {
+        headers: {
+          Accept: 'application/vnd.github.v3+json',
+          // No token needed for public repo reads of content lists
+        },
+      });
+
+      if (response.status === 404) {
+        console.log("'/models' directory not found. It will be created on first upload.");
+        setModels([]);
+        return;
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`GitHub API Error: ${errorData.message || 'Failed to fetch models.'}`);
+      }
+
+      const contents: any = await response.json();
+      
+      // FIX: Ensure contents is an array before trying to map over it.
+      // The API returns an object if the path is a file, which would crash the app.
+      if (!Array.isArray(contents)) {
+        console.warn("GitHub API did not return an array for the /models directory.", contents);
+        setModels([]);
+        return;
+      }
+
+      const modelFiles = contents.filter(item => item.name.endsWith('.glb') || item.name.endsWith('.gltf') || item.name.endsWith('.usdz'));
+
+      const fetchedModels: ModelData[] = modelFiles.map(file => {
+        const title = file.name
+          .replace(/^\d+-/, '')
+          .replace(/\.(glb|gltf|usdz)$/, '')
+          .replace(/_/g, ' ')
+          .replace(/-/g, ' ');
+
+        return {
+          id: file.sha,
+          title: title,
+          description: ``,
+          fileUrl: file.download_url,
+        };
+      }).reverse();
+
+      setModels(fetchedModels);
+
+    } catch (error) {
+      console.error("Failed to fetch models from GitHub", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && githubConfig) {
+      fetchModelsFromRepo(githubConfig);
+    } else if (isAuthenticated) {
+      setIsLoading(false);
+    }
+  }, [githubConfig, fetchModelsFromRepo, isAuthenticated]);
+
 
   useEffect(() => {
     const handleUrlChange = () => {
@@ -39,25 +111,28 @@ const App: React.FC = () => {
     };
 
     window.addEventListener('popstate', handleUrlChange);
-    handleUrlChange(); // Initial check
+    handleUrlChange();
 
     return () => {
       window.removeEventListener('popstate', handleUrlChange);
     };
   }, []);
   
-  // Prompt user to configure if they haven't yet
   useEffect(() => {
-    if (!githubConfig) {
+    if (isAuthenticated && !githubConfig) {
       setIsSettingsOpen(true);
     }
-  }, [githubConfig]);
+  }, [githubConfig, isAuthenticated]);
+  
+  const handleCorrectPassword = () => {
+    sessionStorage.setItem('app-authenticated', 'true');
+    setIsAuthenticated(true);
+  };
 
-  const handlePublish = (newModel: Omit<ModelData, 'id'>) => {
-    setModels(prevModels => [
-      { ...newModel, id: Date.now().toString() },
-      ...prevModels,
-    ]);
+  const handlePublish = () => {
+    if (githubConfig) {
+      setTimeout(() => fetchModelsFromRepo(githubConfig), 1000);
+    }
   };
 
   const handleSaveSettings = (config: GitHubConfig) => {
@@ -65,6 +140,10 @@ const App: React.FC = () => {
     localStorage.setItem('github-config', JSON.stringify(config));
     setIsSettingsOpen(false);
   };
+
+  if (!isAuthenticated) {
+    return <PasswordProtection onCorrectPassword={handleCorrectPassword} />;
+  }
 
   const modelToShow = currentModelId ? models.find(m => m.id === currentModelId) : null;
 
@@ -79,7 +158,7 @@ const App: React.FC = () => {
     return <FullScreenModelViewer model={modelToShow} onClose={handleCloseViewer} />;
   }
 
-  if (currentModelId && !modelToShow) {
+  if (currentModelId && !modelToShow && !isLoading) {
     return (
         <div className="min-h-screen bg-slate-900 font-sans flex items-center justify-center text-center p-4">
             <div>
@@ -100,6 +179,34 @@ const App: React.FC = () => {
     );
   }
 
+  const renderGalleryContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center text-center bg-slate-800/50 p-10 rounded-lg">
+            <svg className="animate-spin h-12 w-12 text-cyan-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <h3 className="text-xl font-semibold text-slate-300">Loading Models...</h3>
+            <p className="text-slate-400 mt-2">Fetching the latest from your GitHub repo.</p>
+        </div>
+      );
+    }
+    
+    if (!githubConfig) {
+      return (
+        <div className="flex flex-col items-center justify-center text-center bg-slate-800/50 p-10 rounded-lg border-2 border-dashed border-slate-700">
+          <CubeTransparentIcon className="w-16 h-16 text-slate-500 mb-4" />
+          <h3 className="text-xl font-semibold text-slate-300">Configuration Needed</h3>
+          <p className="text-slate-400 mt-2">Please set up your GitHub repository in the settings to see your models.</p>
+        </div>
+      );
+    }
+
+    return <ModelGallery models={models} />;
+  }
+
+
   return (
     <div className="min-h-screen bg-slate-900 font-sans">
       {isSettingsOpen && (
@@ -116,7 +223,7 @@ const App: React.FC = () => {
             <ModelUploader onPublish={handlePublish} />
           </div>
           <div className="lg:col-span-2">
-            <ModelGallery models={models} />
+            {renderGalleryContent()}
           </div>
         </div>
       </main>
