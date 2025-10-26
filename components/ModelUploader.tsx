@@ -13,9 +13,10 @@ const ModelUploader: React.FC<ModelUploaderProps> = ({ onPublish }) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const processFile = (selectedFile: File | undefined) => {
+  const processFile = useCallback((selectedFile: File | undefined) => {
     if (selectedFile) {
       const supportedFormats = ['.glb', '.gltf', '.usdz'];
       const fileExtension = selectedFile.name.slice(selectedFile.name.lastIndexOf('.')).toLowerCase();
@@ -45,7 +46,7 @@ const ModelUploader: React.FC<ModelUploaderProps> = ({ onPublish }) => {
         setPreviewUrl(null);
       }
     }
-  };
+  }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -128,15 +129,26 @@ const ModelUploader: React.FC<ModelUploaderProps> = ({ onPublish }) => {
     }
   };
   
+  const handleDragEnter = useCallback((event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  }, []);
+  
+  const handleDragLeave = useCallback((event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+  }, []);
+  
   const handleDragOver = useCallback((event: React.DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
   }, []);
 
   const handleDrop = useCallback((event: React.DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
+    setIsDragging(false);
     const droppedFile = event.dataTransfer.files?.[0];
     processFile(droppedFile);
-  }, []);
+  }, [processFile]);
 
   return (
     <div className="bg-slate-800 p-6 rounded-lg shadow-lg sticky top-24">
@@ -173,7 +185,9 @@ const ModelUploader: React.FC<ModelUploaderProps> = ({ onPublish }) => {
 
         <div>
             <label 
-                className="flex justify-center w-full h-32 px-4 transition bg-slate-900 border-2 border-slate-700 border-dashed rounded-md appearance-none cursor-pointer hover:border-cyan-400 focus:outline-none"
+                className={`flex justify-center w-full h-32 px-4 transition bg-slate-900 border-2 border-slate-700 border-dashed rounded-md appearance-none cursor-pointer hover:border-cyan-400 focus:outline-none ${isDragging ? 'border-cyan-400 ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-800' : ''}`}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
             >

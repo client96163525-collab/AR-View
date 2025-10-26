@@ -11,7 +11,7 @@ interface GitHubSettingsModalProps {
 
 const GitHubSettingsModal: React.FC<GitHubSettingsModalProps> = ({ onClose, onSave, currentConfig }) => {
   const [owner, setOwner] = useState('client96163525-collab');
-  const [repo, setRepo] = useState('ar3dview');
+  const [repo, setRepo] = useState('AR-View');
   const [pat, setPat] = useState('');
   const [branch, setBranch] = useState('main');
   const [error, setError] = useState('');
