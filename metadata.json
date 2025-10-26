@@ -1,0 +1,5 @@
+{
+  "name": "3D GLB Model Showcase",
+  "description": "An interactive web application where users can upload 3D models in GLB format, add details, and publish them to a public gallery for others to view and interact with.",
+  "requestFramePermissions": []
+}
