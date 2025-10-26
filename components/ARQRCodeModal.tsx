@@ -1,20 +1,19 @@
-
 import React from 'react';
 import { CloseIcon, ClipboardCheckIcon, ShareIcon } from './icons';
 
 interface ARQRCodeModalProps {
-  modelUrl: string;
+  arPageUrl: string;
   modelTitle: string;
   onClose: () => void;
 }
 
-const ARQRCodeModal: React.FC<ARQRCodeModalProps> = ({ modelUrl, modelTitle, onClose }) => {
+const ARQRCodeModal: React.FC<ARQRCodeModalProps> = ({ arPageUrl, modelTitle, onClose }) => {
   const [copied, setCopied] = React.useState(false);
 
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(modelUrl)}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(arPageUrl)}`;
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(modelUrl).then(() => {
+    navigator.clipboard.writeText(arPageUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -40,16 +39,14 @@ const ARQRCodeModal: React.FC<ARQRCodeModalProps> = ({ modelUrl, modelTitle, onC
         </button>
 
         <h2 className="text-xl font-bold text-white mb-2">View Model in AR</h2>
-        <p className="text-slate-400 mb-6 text-sm">Scan this code with your phone to view the model directly.</p>
+        <p className="text-slate-400 mb-6 text-sm">Scan the QR code with your mobile device to open this model in augmented reality.</p>
 
         <div className="bg-white p-2 rounded-lg inline-block">
             <img src={qrCodeUrl} alt={`QR code for ${modelTitle}`} width="256" height="256" />
         </div>
         
         <div className="text-xs text-slate-500 mt-4 bg-slate-700/50 p-3 rounded-md text-left w-full">
-            <p><strong className="font-semibold text-slate-400">For iOS:</strong> Best with <code>.usdz</code> files for AR Quick Look.</p>
-            <p className="mt-1"><strong className="font-semibold text-slate-400">For Android:</strong> Best with <code>.glb</code> or <code>.gltf</code> files for Scene Viewer.</p>
-            <p className="mt-2 text-slate-400">Scanning a file not optimized for your device may result in downloading the file instead of viewing it in AR.</p>
+            <p className="text-slate-400">This will open a dedicated viewing page on your device, which will launch the AR experience using the best technology available for your phone (AR Quick Look on iOS or Scene Viewer on Android).</p>
         </div>
 
         <div className="w-full mt-8">
@@ -65,7 +62,7 @@ const ARQRCodeModal: React.FC<ARQRCodeModalProps> = ({ modelUrl, modelTitle, onC
                 ) : (
                     <>
                         <ShareIcon className="w-5 h-5" />
-                        Copy Direct Model Link
+                        Copy AR Link
                     </>
                 )}
             </button>

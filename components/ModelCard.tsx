@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ModelData, GitHubConfig } from '../types';
 import { ShareIcon, ClipboardCheckIcon, ARIcon } from './icons';
@@ -14,11 +13,31 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, githubConfig }) => {
   const [shareUrl, setShareUrl] = React.useState<string | null>(null);
   const [isARModalOpen, setIsARModalOpen] = React.useState(false);
 
+  const arPageUrl = React.useMemo(() => {
+    try {
+      const config = githubConfig;
+      const baseUrl = config?.publicUrl || window.location.origin;
+      
+      const url = new URL(window.location.pathname, baseUrl);
+      url.search = ''; // Clear existing params like modelId
+      url.searchParams.set('ar', 'true');
+      url.searchParams.set('modelUrl', model.fileUrl);
+      url.searchParams.set('title', model.title);
+      return url.toString();
+    } catch (error) {
+      console.error("Error creating AR page URL:", error);
+      const url = new URL(window.location.href);
+      url.search = '';
+      url.searchParams.set('ar', 'true');
+      url.searchParams.set('modelUrl', model.fileUrl);
+      url.searchParams.set('title', model.title);
+      return url.toString();
+    }
+  }, [model.fileUrl, model.title, githubConfig]);
+  
   const fullShareUrl = React.useMemo(() => {
     try {
       const config = githubConfig;
-      
-      // Use the public URL from settings if it exists, otherwise default to the current page's origin.
       const baseUrl = config?.publicUrl || window.location.origin;
       
       const url = new URL(window.location.pathname, baseUrl);
@@ -26,7 +45,6 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, githubConfig }) => {
       return url.toString();
     } catch (error) {
       console.error("Error creating share URL:", error);
-      // Fallback to a relative URL if parsing fails
       const url = new URL(window.location.href);
       url.searchParams.set('modelId', model.id);
       return url.toString();
@@ -102,7 +120,7 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, githubConfig }) => {
       </div>
       {isARModalOpen && (
         <ARQRCodeModal 
-            modelUrl={model.fileUrl}
+            arPageUrl={arPageUrl}
             modelTitle={model.title}
             onClose={() => setIsARModalOpen(false)} 
         />

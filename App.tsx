@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ModelData, GitHubConfig } from './types';
 import Header from './components/Header';
@@ -7,9 +6,88 @@ import ModelGallery from './components/ModelGallery';
 import FullScreenModelViewer from './components/FullScreenModelViewer';
 import GitHubSettingsModal from './components/GitHubSettingsModal';
 import PasswordProtection from './components/PasswordProtection';
-import { CubeTransparentIcon, ExclamationTriangleIcon } from './components/icons';
+import { CubeTransparentIcon, ExclamationTriangleIcon, ARIcon } from './components/icons';
+
+
+const ARViewer: React.FC = () => {
+  const [modelUrl, setModelUrl] = React.useState<string | null>(null);
+  const [title, setTitle] = React.useState<string>('3D Model');
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const url = params.get('modelUrl');
+    if (url) {
+      try {
+        // Basic validation that the URL is well-formed
+        new URL(url);
+        setModelUrl(url);
+      } catch (e) {
+        setError('Invalid model URL provided.');
+      }
+    } else {
+      setError('No model URL provided.');
+    }
+    setTitle(params.get('title') || '3D Model');
+  }, []);
+
+  if (error) {
+    return (
+      <div className="w-screen h-screen bg-slate-900 text-white flex flex-col items-center justify-center text-center p-4">
+        <h1 className="text-2xl font-bold text-red-400">Error</h1>
+        <p className="text-slate-300 mt-2">{error}</p>
+        <a href={window.location.pathname} className="mt-6 bg-cyan-600 text-white font-bold py-2 px-6 rounded-md hover:bg-cyan-500 transition-colors">
+          Back to Gallery
+        </a>
+      </div>
+    );
+  }
+
+  if (!modelUrl) {
+    return (
+      <div className="w-screen h-screen bg-slate-900 text-white flex items-center justify-center">
+        <svg className="animate-spin h-12 w-12 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-slate-900">
+      <model-viewer
+        src={modelUrl}
+        alt={title}
+        ar
+        ar-modes="webxr scene-viewer quick-look"
+        camera-controls
+        auto-rotate
+        style={{ width: '100%', height: '100%', '--progress-bar-color': '#22d3ee' }}
+      >
+        <div className="absolute top-0 left-0 p-4 w-full bg-gradient-to-b from-black/50 to-transparent">
+            <h1 className="text-xl font-bold text-white truncate">{title}</h1>
+        </div>
+        <button
+          slot="ar-button"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-cyan-600 text-white font-bold py-3 px-6 rounded-full flex items-center gap-3 hover:bg-cyan-500 transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-cyan-500"
+        >
+          <ARIcon className="w-6 h-6" />
+          <span>View in AR</span>
+        </button>
+      </model-viewer>
+    </div>
+  );
+};
+
 
 const App: React.FC = () => {
+  // Check for AR mode first, as it's a separate, self-contained view.
+  const isARView = new URLSearchParams(window.location.search).has('ar');
+  if (isARView) {
+    return <ARViewer />;
+  }
+
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const [models, setModels] = React.useState<ModelData[]>([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);

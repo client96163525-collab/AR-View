@@ -1,4 +1,5 @@
-import React from 'react';
+// FIX: Use a type-only import to prevent module scope issues with global JSX augmentation.
+import type React from 'react';
 
 export interface ModelData {
   id: string;
@@ -15,11 +16,10 @@ export interface GitHubConfig {
   publicUrl?: string;
 }
 
-// FIX: Replaced `declare global` with `declare module 'react'` to correctly augment
-// React's JSX types instead of overwriting them. This resolves all errors
-// indicating that standard HTML elements like 'div' do not exist on type 'JSX.IntrinsicElements'.
-// This allows TypeScript to recognize the custom <model-viewer> element as a valid JSX tag.
-declare module 'react' {
+// FIX: Using `declare global` to augment the global JSX namespace.
+// This allows TypeScript to recognize the custom <model-viewer> element as a valid JSX tag
+// without causing module resolution issues with 'react'.
+declare global {
   namespace JSX {
     interface IntrinsicElements {
       'model-viewer': React.DetailedHTMLProps<

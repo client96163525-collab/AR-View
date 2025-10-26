@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { ModelData } from '../types';
-import { CloseIcon, DownloadIcon } from './icons';
+import { CloseIcon, DownloadIcon, ARIcon } from './icons';
 
 interface FullScreenModelViewerProps {
   model: ModelData;
@@ -62,10 +61,19 @@ const FullScreenModelViewer: React.FC<FullScreenModelViewerProps> = ({ model, on
         src={model.fileUrl}
         alt={model.title}
         ar
+        ar-modes="webxr scene-viewer quick-look"
         camera-controls
         auto-rotate
         style={{ width: '100%', height: '100%', '--progress-bar-color': '#22d3ee' }}
-      />
+      >
+        <button
+          slot="ar-button"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-cyan-600 text-white font-bold py-3 px-6 rounded-full flex items-center gap-3 hover:bg-cyan-500 transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-cyan-500"
+        >
+          <ARIcon className="w-6 h-6" />
+          <span>View in AR</span>
+        </button>
+      </model-viewer>
       <div className="absolute top-0 left-0 p-4 w-full bg-gradient-to-b from-black/50 to-transparent">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-white truncate">{model.title}</h1>
@@ -111,9 +119,6 @@ const FullScreenModelViewer: React.FC<FullScreenModelViewerProps> = ({ model, on
         >
           <CloseIcon className="w-6 h-6" />
         </button>
-      </div>
-       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-800/50 text-white px-4 py-2 rounded-full text-sm pointer-events-none">
-        Drag to rotate, scroll to zoom, right-click + drag to pan.
       </div>
     </div>
   );
