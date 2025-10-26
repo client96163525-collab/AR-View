@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+
+// FIX: Switched to namespace import for React to solve JSX intrinsic element type errors.
+import * as React from 'react';
 import { GitHubConfig } from '../types';
 import { CloseIcon, GitHubIcon } from './icons';
 
@@ -9,14 +11,14 @@ interface GitHubSettingsModalProps {
 }
 
 const GitHubSettingsModal: React.FC<GitHubSettingsModalProps> = ({ onClose, onSave, currentConfig }) => {
-  const [owner, setOwner] = useState('client96163525-collab');
-  const [repo, setRepo] = useState('AR-View');
-  const [pat, setPat] = useState('');
-  const [branch, setBranch] = useState('main');
-  const [publicUrl, setPublicUrl] = useState('');
-  const [error, setError] = useState('');
+  const [owner, setOwner] = React.useState('client96163525-collab');
+  const [repo, setRepo] = React.useState('AR-View');
+  const [pat, setPat] = React.useState('');
+  const [branch, setBranch] = React.useState('main');
+  const [publicUrl, setPublicUrl] = React.useState('');
+  const [error, setError] = React.useState('');
   
-  useEffect(() => {
+  React.useEffect(() => {
     if (currentConfig) {
       setOwner(currentConfig.owner);
       setRepo(currentConfig.repo);
@@ -27,10 +29,18 @@ const GitHubSettingsModal: React.FC<GitHubSettingsModalProps> = ({ onClose, onSa
   }, [currentConfig]);
 
   const handleSave = () => {
+    setError(''); // Reset error state on each attempt
+
     if (!owner.trim() || !repo.trim() || !pat.trim() || !branch.trim()) {
       setError('Owner, Repo, PAT, and Branch fields are required.');
       return;
     }
+
+    if (!pat.trim().startsWith('ghp_') && !pat.trim().startsWith('github_pat_')) {
+      setError("Invalid PAT format. A Personal Access Token must start with 'ghp_' (classic) or 'github_pat_' (fine-grained).");
+      return;
+    }
+
     onSave({ owner, repo, pat, branch, publicUrl });
   };
 
@@ -111,7 +121,7 @@ const GitHubSettingsModal: React.FC<GitHubSettingsModalProps> = ({ onClose, onSa
                 value={pat}
                 onChange={(e) => setPat(e.target.value)}
                 className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
-                placeholder="ghp_..."
+                placeholder="ghp_... or github_pat_..."
               />
             </div>
 
@@ -133,12 +143,15 @@ const GitHubSettingsModal: React.FC<GitHubSettingsModalProps> = ({ onClose, onSa
             </div>
 
             <div className="bg-red-900/50 border border-red-700 text-red-300 text-xs rounded-md p-3">
-                <p className="font-bold">Security Warning</p>
+                <p className="font-bold">Security Warning & PAT Info</p>
                 <p className="mt-1">
-                    Your Personal Access Token is stored in your browser. Use a token with only the necessary `repo` permissions. 
-                    <a href="https://github.com/settings/tokens/new?scopes=repo&description=3DModelShowcase" target="_blank" rel="noopener noreferrer" className="underline hover:text-red-200 ml-1">
-                       Create a secure token.
+                    Your PAT is stored in your browser's local storage. For security, use a token with only the necessary `repo` permissions.
+                    <a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens" target="_blank" rel="noopener noreferrer" className="underline hover:text-red-200 ml-1">
+                       Learn how to create a PAT.
                     </a>
+                </p>
+                 <p className="mt-2">
+                    A valid token should start with <strong>ghp_</strong> (classic) or <strong>github_pat_</strong> (fine-grained).
                 </p>
             </div>
             

@@ -1,4 +1,7 @@
-import React, { useState, useMemo } from 'react';
+
+
+// FIX: Switched to namespace import for React to solve JSX intrinsic element type errors.
+import * as React from 'react';
 import { ModelData, GitHubConfig } from '../types';
 import { ShareIcon, ClipboardCheckIcon, ARIcon } from './icons';
 import ARQRCodeModal from './ARQRCodeModal';
@@ -9,11 +12,11 @@ interface ModelCardProps {
 }
 
 const ModelCard: React.FC<ModelCardProps> = ({ model, githubConfig }) => {
-  const [copied, setCopied] = useState(false);
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [isARModalOpen, setIsARModalOpen] = useState(false);
+  const [copied, setCopied] = React.useState(false);
+  const [shareUrl, setShareUrl] = React.useState<string | null>(null);
+  const [isARModalOpen, setIsARModalOpen] = React.useState(false);
 
-  const fullShareUrl = useMemo(() => {
+  const fullShareUrl = React.useMemo(() => {
     try {
       const config = githubConfig;
       

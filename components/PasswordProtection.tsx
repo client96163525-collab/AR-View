@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+
+// FIX: Switched to namespace import for React to solve JSX intrinsic element type errors.
+import * as React from 'react';
 import { LockClosedIcon } from './icons';
 
 interface PasswordProtectionProps {
@@ -6,8 +8,8 @@ interface PasswordProtectionProps {
 }
 
 const PasswordProtection: React.FC<PasswordProtectionProps> = ({ onCorrectPassword }) => {
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [password, setPassword] = React.useState('');
+  const [error, setError] = React.useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

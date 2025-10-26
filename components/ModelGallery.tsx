@@ -1,5 +1,7 @@
 
-import React, { useState } from 'react';
+
+// FIX: Switched to namespace import for React to solve JSX intrinsic element type errors.
+import * as React from 'react';
 import { ModelData, GitHubConfig } from '../types';
 import ModelCard from './ModelCard';
 import { CubeTransparentIcon, SearchIcon } from './icons';
@@ -10,11 +12,23 @@ interface ModelGalleryProps {
 }
 
 const ModelGallery: React.FC<ModelGalleryProps> = ({ models, githubConfig }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = React.useState('');
+
+  React.useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
 
   const filteredModels = models.filter(model =>
-    model.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    model.description.toLowerCase().includes(searchTerm.toLowerCase())
+    model.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    model.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
   );
 
   return (
@@ -43,11 +57,11 @@ const ModelGallery: React.FC<ModelGalleryProps> = ({ models, githubConfig }) => 
           <h3 className="text-xl font-semibold text-slate-300">No Models Yet</h3>
           <p className="text-slate-400 mt-2">Upload your first .glb model to see it here!</p>
         </div>
-      ) : filteredModels.length === 0 ? (
+      ) : filteredModels.length === 0 && debouncedSearchTerm ? (
         <div className="flex flex-col items-center justify-center text-center bg-slate-800/50 p-10 rounded-lg">
           <SearchIcon className="w-16 h-16 text-slate-500 mb-4" />
           <h3 className="text-xl font-semibold text-slate-300">No Models Found</h3>
-          <p className="text-slate-400 mt-2">Your search for "{searchTerm}" did not match any models.</p>
+          <p className="text-slate-400 mt-2">Your search for "{debouncedSearchTerm}" did not match any models.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

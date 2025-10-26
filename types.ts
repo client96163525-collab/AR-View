@@ -1,9 +1,6 @@
-// FIX: Corrected React imports to resolve JSX type definition issues.
-// Using a standard `import React from 'react'` ensures that TypeScript correctly
-// merges the global `JSX.IntrinsicElements` interface from React with the
-// custom element definition below, instead of overwriting it. This fixes
-// errors related to unrecognized standard HTML tags (e.g., 'div', 'h1') in JSX.
-import React from 'react';
+
+// FIX: Switched to namespace import for React to solve JSX intrinsic element type errors.
+import * as React from 'react';
 
 export interface ModelData {
   id: string;

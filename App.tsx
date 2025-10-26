@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+
+// FIX: Switched to namespace import for React to solve JSX intrinsic element type errors.
+import * as React from 'react';
 import { ModelData, GitHubConfig } from './types';
 import Header from './components/Header';
 import ModelUploader from './components/ModelUploader';
@@ -9,13 +11,13 @@ import PasswordProtection from './components/PasswordProtection';
 import { CubeTransparentIcon, ExclamationTriangleIcon } from './components/icons';
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [models, setModels] = useState<ModelData[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [apiError, setApiError] = useState<string | null>(null);
-  const [currentModelId, setCurrentModelId] = useState<string | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [githubConfig, setGithubConfig] = useState<GitHubConfig | null>(() => {
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [models, setModels] = React.useState<ModelData[]>([]);
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
+  const [apiError, setApiError] = React.useState<string | null>(null);
+  const [currentModelId, setCurrentModelId] = React.useState<string | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  const [githubConfig, setGithubConfig] = React.useState<GitHubConfig | null>(() => {
     try {
       const storedConfig = localStorage.getItem('github-config');
       return storedConfig ? JSON.parse(storedConfig) : null;
@@ -24,14 +26,14 @@ const App: React.FC = () => {
     }
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     const sessionAuth = sessionStorage.getItem('app-authenticated');
     if (sessionAuth === 'true') {
       setIsAuthenticated(true);
     }
   }, []);
 
-  const fetchModelsFromRepo = useCallback(async (config: GitHubConfig) => {
+  const fetchModelsFromRepo = React.useCallback(async (config: GitHubConfig) => {
     if (!config || !config.owner || !config.repo) {
       setIsLoading(false);
       return;
@@ -102,7 +104,7 @@ const App: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (isAuthenticated && githubConfig) {
       fetchModelsFromRepo(githubConfig);
     } else if (isAuthenticated) {
@@ -111,7 +113,7 @@ const App: React.FC = () => {
   }, [githubConfig, fetchModelsFromRepo, isAuthenticated]);
 
 
-  useEffect(() => {
+  React.useEffect(() => {
     const handleUrlChange = () => {
       const searchParams = new URLSearchParams(window.location.search);
       setCurrentModelId(searchParams.get('modelId'));
@@ -125,7 +127,7 @@ const App: React.FC = () => {
     };
   }, []);
   
-  useEffect(() => {
+  React.useEffect(() => {
     if (isAuthenticated && !githubConfig) {
       setIsSettingsOpen(true);
     }

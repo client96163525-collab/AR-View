@@ -1,22 +1,25 @@
-import React, { useState, useRef, useCallback } from 'react';
+
+// FIX: Switched to namespace import for React to solve JSX intrinsic element type errors.
+import * as React from 'react';
 import { GitHubConfig } from '../types';
-import { UploadIcon, ExclamationTriangleIcon } from './icons';
+import { UploadIcon, ExclamationTriangleIcon, ClipboardCheckIcon } from './icons';
 
 interface ModelUploaderProps {
   onPublish: () => void;
 }
 
 const ModelUploader: React.FC<ModelUploaderProps> = ({ onPublish }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [title, setTitle] = React.useState('');
+  const [description, setDescription] = React.useState('');
+  const [file, setFile] = React.useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [uploadSuccess, setUploadSuccess] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const processFile = useCallback((selectedFile: File | undefined) => {
+  const processFile = React.useCallback((selectedFile: File | undefined) => {
     if (selectedFile) {
       const supportedFormats = ['.glb', '.gltf', '.usdz'];
       const fileExtension = selectedFile.name.slice(selectedFile.name.lastIndexOf('.')).toLowerCase();
@@ -35,6 +38,8 @@ const ModelUploader: React.FC<ModelUploaderProps> = ({ onPublish }) => {
           setFile(selectedFile);
           setPreviewUrl(dataUrl);
           setError(null);
+          setUploadSuccess(true);
+          setTimeout(() => setUploadSuccess(false), 2000);
         };
         reader.onerror = () => {
           setError('Failed to read the file. Please try again.');
@@ -119,21 +124,21 @@ const ModelUploader: React.FC<ModelUploaderProps> = ({ onPublish }) => {
     }
   };
   
-  const handleDragEnter = useCallback((event: React.DragEvent<HTMLLabelElement>) => {
+  const handleDragEnter = React.useCallback((event: React.DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
     setIsDragging(true);
   }, []);
   
-  const handleDragLeave = useCallback((event: React.DragEvent<HTMLLabelElement>) => {
+  const handleDragLeave = React.useCallback((event: React.DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
     setIsDragging(false);
   }, []);
   
-  const handleDragOver = useCallback((event: React.DragEvent<HTMLLabelElement>) => {
+  const handleDragOver = React.useCallback((event: React.DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
   }, []);
 
-  const handleDrop = useCallback((event: React.DragEvent<HTMLLabelElement>) => {
+  const handleDrop = React.useCallback((event: React.DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
     setIsDragging(false);
     const droppedFile = event.dataTransfer.files?.[0];
@@ -175,7 +180,15 @@ const ModelUploader: React.FC<ModelUploaderProps> = ({ onPublish }) => {
 
         <div>
             <label 
-                className={`flex flex-col justify-center items-center w-full h-32 px-4 transition bg-slate-900 border-2 border-slate-700 border-dashed rounded-md appearance-none cursor-pointer hover:border-cyan-400 focus:outline-none ${isDragging ? 'border-cyan-400 ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-800' : ''}`}
+                className={`flex flex-col justify-center items-center w-full h-32 px-4 transition bg-slate-900 border-2 border-dashed rounded-md appearance-none cursor-pointer focus:outline-none ${
+                    isDragging 
+                        ? 'border-cyan-400 ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-800' 
+                        : uploadSuccess 
+                        ? 'border-green-500' 
+                        : file
+                        ? 'border-cyan-600'
+                        : 'border-slate-700 hover:border-cyan-400'
+                }`}
                 onDragEnter={handleDragEnter}
                 onDragLeave={handleDragLeave}
                 onDragOver={handleDragOver}
@@ -185,6 +198,11 @@ const ModelUploader: React.FC<ModelUploaderProps> = ({ onPublish }) => {
                     <div className="text-center pointer-events-none">
                         <UploadIcon className="w-10 h-10 text-cyan-400 mx-auto" />
                         <p className="mt-2 font-semibold text-cyan-400">Drop Your Model Here</p>
+                    </div>
+                ) : uploadSuccess ? (
+                     <div className="text-center pointer-events-none">
+                        <ClipboardCheckIcon className="w-10 h-10 text-green-400 mx-auto" />
+                        <p className="mt-2 font-semibold text-green-400">Model Ready for Preview</p>
                     </div>
                 ) : (
                     <div className="text-center">

@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+
+// FIX: Switched to namespace import for React to solve JSX intrinsic element type errors.
+import * as React from 'react';
 import { CloseIcon, ClipboardCheckIcon, ShareIcon } from './icons';
 
 interface ARQRCodeModalProps {
@@ -8,7 +10,7 @@ interface ARQRCodeModalProps {
 }
 
 const ARQRCodeModal: React.FC<ARQRCodeModalProps> = ({ shareUrl, modelTitle, onClose }) => {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = React.useState(false);
 
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(shareUrl)}`;
 

@@ -1,5 +1,7 @@
 
-import React from 'react';
+
+// FIX: Switched to namespace import for React to solve JSX intrinsic element type errors.
+import * as React from 'react';
 import { ModelData } from '../types';
 import { CloseIcon } from './icons';
 
