@@ -1,7 +1,5 @@
 
-
-// FIX: Switched to namespace import for React to solve JSX intrinsic element type errors.
-import * as React from 'react';
+import React from 'react';
 import { ModelData, GitHubConfig } from '../types';
 import { ShareIcon, ClipboardCheckIcon, ARIcon } from './icons';
 import ARQRCodeModal from './ARQRCodeModal';
@@ -104,7 +102,7 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, githubConfig }) => {
       </div>
       {isARModalOpen && (
         <ARQRCodeModal 
-            shareUrl={fullShareUrl}
+            modelUrl={model.fileUrl}
             modelTitle={model.title}
             onClose={() => setIsARModalOpen(false)} 
         />

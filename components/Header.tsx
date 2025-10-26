@@ -1,6 +1,5 @@
 
-// FIX: Switched to namespace import for React to solve JSX intrinsic element type errors.
-import * as React from 'react';
+import React from 'react';
 import { CubeIcon, CogIcon } from './icons';
 
 interface HeaderProps {

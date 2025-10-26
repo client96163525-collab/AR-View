@@ -1,6 +1,4 @@
-
-// FIX: Switched to namespace import for React to solve JSX intrinsic element type errors.
-import * as React from 'react';
+import React from 'react';
 
 export interface ModelData {
   id: string;
@@ -17,9 +15,11 @@ export interface GitHubConfig {
   publicUrl?: string;
 }
 
-// Augment the JSX.IntrinsicElements interface to include the <model-viewer> custom element.
-// This allows TypeScript to recognize <model-viewer> as a valid JSX tag.
-declare global {
+// FIX: Replaced `declare global` with `declare module 'react'` to correctly augment
+// React's JSX types instead of overwriting them. This resolves all errors
+// indicating that standard HTML elements like 'div' do not exist on type 'JSX.IntrinsicElements'.
+// This allows TypeScript to recognize the custom <model-viewer> element as a valid JSX tag.
+declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
       'model-viewer': React.DetailedHTMLProps<

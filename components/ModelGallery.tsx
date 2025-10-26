@@ -1,7 +1,6 @@
 
 
-// FIX: Switched to namespace import for React to solve JSX intrinsic element type errors.
-import * as React from 'react';
+import React from 'react';
 import { ModelData, GitHubConfig } from '../types';
 import ModelCard from './ModelCard';
 import { CubeTransparentIcon, SearchIcon } from './icons';

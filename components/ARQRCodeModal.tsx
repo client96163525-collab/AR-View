@@ -1,21 +1,20 @@
 
-// FIX: Switched to namespace import for React to solve JSX intrinsic element type errors.
-import * as React from 'react';
+import React from 'react';
 import { CloseIcon, ClipboardCheckIcon, ShareIcon } from './icons';
 
 interface ARQRCodeModalProps {
-  shareUrl: string;
+  modelUrl: string;
   modelTitle: string;
   onClose: () => void;
 }
 
-const ARQRCodeModal: React.FC<ARQRCodeModalProps> = ({ shareUrl, modelTitle, onClose }) => {
+const ARQRCodeModal: React.FC<ARQRCodeModalProps> = ({ modelUrl, modelTitle, onClose }) => {
   const [copied, setCopied] = React.useState(false);
 
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(shareUrl)}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(modelUrl)}`;
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareUrl).then(() => {
+    navigator.clipboard.writeText(modelUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -40,14 +39,18 @@ const ARQRCodeModal: React.FC<ARQRCodeModalProps> = ({ shareUrl, modelTitle, onC
           <CloseIcon className="w-6 h-6" />
         </button>
 
-        <h2 className="text-xl font-bold text-white mb-2">View in AR</h2>
-        <p className="text-slate-400 mb-6 text-sm">Scan with your phone to view "{modelTitle}" in your space.</p>
+        <h2 className="text-xl font-bold text-white mb-2">View Model in AR</h2>
+        <p className="text-slate-400 mb-6 text-sm">Scan this code with your phone to view the model directly.</p>
 
         <div className="bg-white p-2 rounded-lg inline-block">
             <img src={qrCodeUrl} alt={`QR code for ${modelTitle}`} width="256" height="256" />
         </div>
         
-        <p className="text-xs text-slate-500 mt-4">Point your device's camera at the code.</p>
+        <div className="text-xs text-slate-500 mt-4 bg-slate-700/50 p-3 rounded-md text-left w-full">
+            <p><strong className="font-semibold text-slate-400">For iOS:</strong> Best with <code>.usdz</code> files for AR Quick Look.</p>
+            <p className="mt-1"><strong className="font-semibold text-slate-400">For Android:</strong> Best with <code>.glb</code> or <code>.gltf</code> files for Scene Viewer.</p>
+            <p className="mt-2 text-slate-400">Scanning a file not optimized for your device may result in downloading the file instead of viewing it in AR.</p>
+        </div>
 
         <div className="w-full mt-8">
             <button
@@ -62,7 +65,7 @@ const ARQRCodeModal: React.FC<ARQRCodeModalProps> = ({ shareUrl, modelTitle, onC
                 ) : (
                     <>
                         <ShareIcon className="w-5 h-5" />
-                        Copy Link
+                        Copy Direct Model Link
                     </>
                 )}
             </button>
