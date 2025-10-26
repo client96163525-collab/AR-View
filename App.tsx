@@ -6,12 +6,13 @@ import ModelGallery from './components/ModelGallery';
 import FullScreenModelViewer from './components/FullScreenModelViewer';
 import GitHubSettingsModal from './components/GitHubSettingsModal';
 import PasswordProtection from './components/PasswordProtection';
-import { CubeTransparentIcon } from './components/icons';
+import { CubeTransparentIcon, ExclamationTriangleIcon } from './components/icons';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [models, setModels] = useState<ModelData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [currentModelId, setCurrentModelId] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [githubConfig, setGithubConfig] = useState<GitHubConfig | null>(() => {
@@ -38,33 +39,37 @@ const App: React.FC = () => {
     
     setIsLoading(true);
     setModels([]);
+    setApiError(null);
 
     try {
       const apiUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/models`;
       const response = await fetch(apiUrl, {
         headers: {
           Accept: 'application/vnd.github.v3+json',
-          // No token needed for public repo reads of content lists
+          ...(config.pat && { Authorization: `token ${config.pat}` }),
         },
       });
 
       if (response.status === 404) {
-        console.log("'/models' directory not found. It will be created on first upload.");
+        console.log("'/models' directory not found. This is normal for a new setup and will be created on first upload.");
         setModels([]);
         return;
       }
-
+       if (response.status === 401) {
+        throw new Error('GitHub API Error (401 Unauthorized): Your Personal Access Token is incorrect or has expired. Please verify it in the settings.');
+      }
+      if (response.status === 403) {
+        throw new Error('GitHub API Error (403 Forbidden): Your Personal Access Token may not have the required "repo" scope, or you may have hit a rate limit. Please check your token permissions.');
+      }
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`GitHub API Error: ${errorData.message || 'Failed to fetch models.'}`);
+        const errorData = await response.json().catch(() => ({ message: 'Could not parse error response.' }));
+        throw new Error(`GitHub API Error (${response.status}): ${errorData.message || 'Failed to fetch models.'}`);
       }
 
       const contents: any = await response.json();
       
-      // FIX: Ensure contents is an array before trying to map over it.
-      // The API returns an object if the path is a file, which would crash the app.
       if (!Array.isArray(contents)) {
-        console.warn("GitHub API did not return an array for the /models directory.", contents);
+        console.warn("GitHub API did not return an array for the /models directory. This can happen if '/models' is a file, not a directory.", contents);
         setModels([]);
         return;
       }
@@ -88,8 +93,10 @@ const App: React.FC = () => {
 
       setModels(fetchedModels);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to fetch models from GitHub", error);
+      setApiError(error.message || 'An unexpected error occurred while fetching models.');
+      setModels([]);
     } finally {
       setIsLoading(false);
     }
@@ -193,6 +200,22 @@ const App: React.FC = () => {
       );
     }
     
+    if (apiError) {
+      return (
+        <div className="flex flex-col items-center justify-center text-center bg-red-900/50 p-10 rounded-lg border-2 border-dashed border-red-700">
+          <ExclamationTriangleIcon className="w-16 h-16 text-red-400 mb-4" />
+          <h3 className="text-xl font-semibold text-red-200">Failed to Load Models</h3>
+          <p className="text-red-300 mt-2 max-w-xl">{apiError}</p>
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="mt-6 bg-slate-700 text-white font-bold py-2 px-6 rounded-md hover:bg-slate-600 transition-colors"
+          >
+            Check GitHub Settings
+          </button>
+        </div>
+      );
+    }
+
     if (!githubConfig) {
       return (
         <div className="flex flex-col items-center justify-center text-center bg-slate-800/50 p-10 rounded-lg border-2 border-dashed border-slate-700">
@@ -203,7 +226,7 @@ const App: React.FC = () => {
       );
     }
 
-    return <ModelGallery models={models} />;
+    return <ModelGallery models={models} githubConfig={githubConfig} />;
   }
 
 

@@ -5,17 +5,17 @@ import ARQRCodeModal from './ARQRCodeModal';
 
 interface ModelCardProps {
   model: ModelData;
+  githubConfig: GitHubConfig | null;
 }
 
-const ModelCard: React.FC<ModelCardProps> = ({ model }) => {
+const ModelCard: React.FC<ModelCardProps> = ({ model, githubConfig }) => {
   const [copied, setCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isARModalOpen, setIsARModalOpen] = useState(false);
 
   const fullShareUrl = useMemo(() => {
     try {
-      const storedConfig = localStorage.getItem('github-config');
-      const config: GitHubConfig | null = storedConfig ? JSON.parse(storedConfig) : null;
+      const config = githubConfig;
       
       // Use the public URL from settings if it exists, otherwise default to the current page's origin.
       const baseUrl = config?.publicUrl || window.location.origin;
@@ -30,7 +30,7 @@ const ModelCard: React.FC<ModelCardProps> = ({ model }) => {
       url.searchParams.set('modelId', model.id);
       return url.toString();
     }
-  }, [model.id]);
+  }, [model.id, githubConfig]);
 
   const handleShare = () => {
     navigator.clipboard.writeText(fullShareUrl).then(() => {

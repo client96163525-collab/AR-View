@@ -1,14 +1,15 @@
 
 import React, { useState } from 'react';
-import { ModelData } from '../types';
+import { ModelData, GitHubConfig } from '../types';
 import ModelCard from './ModelCard';
 import { CubeTransparentIcon, SearchIcon } from './icons';
 
 interface ModelGalleryProps {
   models: ModelData[];
+  githubConfig: GitHubConfig | null;
 }
 
-const ModelGallery: React.FC<ModelGalleryProps> = ({ models }) => {
+const ModelGallery: React.FC<ModelGalleryProps> = ({ models, githubConfig }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredModels = models.filter(model =>
@@ -51,7 +52,7 @@ const ModelGallery: React.FC<ModelGalleryProps> = ({ models }) => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredModels.map(model => (
-            <ModelCard key={model.id} model={model} />
+            <ModelCard key={model.id} model={model} githubConfig={githubConfig} />
           ))}
         </div>
       )}
